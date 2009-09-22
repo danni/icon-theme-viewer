@@ -26,10 +26,28 @@ for context in theme.list_contexts():
 
 window = gtk.Window()
 
-sw = gtk.ScrolledWindow()
-window.add(sw)
+vbox = gtk.VBox()
+window.add(vbox)
 
-treeview = gtk.TreeView(model)
+entry = gtk.Entry()
+vbox.pack_start(entry, expand = False)
+
+filter = model.filter_new()
+def filter_func(model, iter):
+    name, context = model.get(iter, NAME, CONTEXT)
+    if context is None: return True
+    needle = entry.get_text()
+    if needle == "": return True
+    else: return needle in name
+
+filter.set_visible_func(filter_func)
+
+entry.connect('activate', lambda e: filter.refilter())
+
+sw = gtk.ScrolledWindow()
+vbox.pack_start(sw)
+
+treeview = gtk.TreeView(filter)
 column = gtk.TreeViewColumn("Icon")
 treeview.append_column(column)
 
