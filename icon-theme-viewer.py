@@ -9,20 +9,20 @@
 import gtk
 import gtk.gdk as gdk
 
-PIXBUF, NAME = range(2)
-model = gtk.TreeStore(gdk.Pixbuf, str)
+PIXBUF, NAME, CONTEXT = range(3)
+model = gtk.TreeStore(gdk.Pixbuf, str, str)
 
 theme = gtk.icon_theme_get_default()
 
 for context in theme.list_contexts():
     if context == 'Animations': continue # do not want
 
-    iter = model.append(None, (None, context))
+    iter = model.append(None, (None, context, None))
 
     for name in theme.list_icons(context):
         pixbuf = theme.load_icon(name, 48, 0)
 
-        model.append(iter, (pixbuf, name))
+        model.append(iter, (pixbuf, name, context))
 
 window = gtk.Window()
 
@@ -39,7 +39,14 @@ column.set_attributes (renderer, pixbuf = PIXBUF)
 
 renderer = gtk.CellRendererText()
 column.pack_start (renderer, expand = True)
-column.set_attributes (renderer, text = NAME)
+def name_data_func(column, renderer, model, iter):
+    name, context = model.get(iter, NAME, CONTEXT)
+    if context is None: # this is a context row
+        nchildren = model.iter_n_children(iter)
+        renderer.set_property('markup', '<b>%s</b> (%i)' % (name, nchildren))
+    else:
+        renderer.set_property('text', name)
+column.set_cell_data_func(renderer, name_data_func)
 
 sw.add(treeview)
 
